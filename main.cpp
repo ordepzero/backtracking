@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdio>
 #include <fstream>//LER ARQUIVO
+#include <stdlib.h>
 
 using namespace std;
 
@@ -22,28 +23,31 @@ bool retrocesso_recursivo(int** jogo);
 int main(){
 
     int nJogos;
-    ifstream infile("teste.txt");
+    //ifstream infile("teste.txt");
 
-    //cin >> nJogos;
-    nJogos = 1;
+    cin >> nJogos;
+    //nJogos = 1;
 
     int** jogo = new int*[tamanho];
+    //int** jogo =(int**) malloc(sizeof(int*)*tamanho);
 
-    //cout << nJogos << endl;
+    cout << nJogos << endl;
 
     for(int i = 0; i < tamanho; i++){
         jogo[i] = new int[tamanho];
+        //jogo[i] = (int*)malloc(sizeof(int)*tamanho);
     }
 
-
-
     for(int n = 0; n < nJogos; n++){
+        cout << "N: "<< n<<endl;
+
         for(int i = 0; i < tamanho; i++){//LINHA
             for(int j = 0; j < tamanho; j++){//COLUNA
-                //cin >> jogo[i][j];
-                infile >> jogo[i][j];
+                cin >> jogo[i][j];
+                //infile >> jogo[i][j];
             }
         }
+        mostrarJogo(jogo);
         retrocesso_recursivo(jogo);
         mostrarJogo(jogo);
     }
@@ -55,7 +59,10 @@ int main(){
 
 
 bool retrocesso_recursivo(int** jogo){
-    int x,y;
+    int x;
+    int y;
+    int* posicao = new int[2];
+    bool resultado = true;
 
     if(atribuicaoCompleta(jogo)){
         cout << "Completa" << endl;
@@ -64,23 +71,21 @@ bool retrocesso_recursivo(int** jogo){
 
     //cin.ignore();
 
-    int* posicao = proximoVazio(jogo);
+    posicao = proximoVazio(jogo);
     x = posicao[0];
     y = posicao[1];
     //cout << "\tNão é completa: " << x << " " << y << " = " << jogo[x][y]<< endl;
 
+    free(posicao);
     for(int i = 1; i <= 9; i++){
         jogo[x][y] = i;
 
         if(consistente(jogo,x,y)){
             //cout << "Consistente" << endl;
-            bool resultado = retrocesso_recursivo(jogo);
+            resultado = retrocesso_recursivo(jogo);
             if(resultado != false){
                 return true;
             }
-            jogo[x][y] = 0;
-        }else{
-            //cout << "Não consistente "<<endl;
         }
     }
     jogo[x][y] = 0;
@@ -90,13 +95,13 @@ bool retrocesso_recursivo(int** jogo){
 
 
 bool consistente(int** jogo, int linha,int coluna){
-    bool mLinha = verificarLinha(jogo,linha,coluna);
-    bool mColuna = verificarColuna(jogo,linha,coluna);
-    bool mBloco = verificarBloco(jogo,linha,coluna);
+    //bool mLinha = verificarLinha(jogo,linha,coluna);
+    //bool mColuna = verificarColuna(jogo,linha,coluna);
+    //bool mBloco = verificarBloco(jogo,linha,coluna);
 
     //cout << "Linha: " <<mLinha<<" Coluna:  "<<mColuna<<" Bloco: "<<mBloco<<" Valor: "<<jogo[linha][coluna]<< endl;
 
-    if(mLinha && mColuna && mBloco){
+    if(verificarLinha(jogo,linha,coluna) && verificarColuna(jogo,linha,coluna) && verificarBloco(jogo,linha,coluna)){
         return true;
     }
     return false;
@@ -105,7 +110,6 @@ bool consistente(int** jogo, int linha,int coluna){
 int* proximoVazio(int** jogo){
 
     int* posicoes =  new int[2];
-    int x,y;
 
     for(int i = 0; i < 9; i++){
         for(int j = 0; j < 9; j++){
@@ -117,9 +121,9 @@ int* proximoVazio(int** jogo){
                 }
         }
     }
-    posicoes[0] = 8;
-    posicoes[1] = 8;
-    return false;
+    //posicoes[0] = 8;
+    //posicoes[1] = 8;
+    return posicoes;
 }
 
 bool verificarColuna(int** jogo, int linha,int coluna){
