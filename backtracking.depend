@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1460836354 source:c:\users\pedenrique\copy\usp\disciplinas\projetodealgoritmo\programas\backtracking\main.cpp
+	<iostream>
+	<cstdio>
+	<fstream>
+
