@@ -20,6 +20,8 @@ bool atribuicaoCompleta(int** jogo);
 
 int* proximoValorMenosRestritivo(int** jogo);
 int nValoresValidos(int** jogo,int linha,int coluna);
+int calcularGrau(int** jogo, int linha,int coluna);
+
 
 int main(){
 
@@ -59,7 +61,9 @@ int main(){
 
 int* proximoValorMenosRestritivo(int** jogo){
     int minimoValoresValidos = 10;
+    int maximoGrau = 0;
     int valorTemp;
+    int grauTemp;
     int* posicoes =  new int[2];
 
     for(int i = 0; i < 9; i++){
@@ -68,8 +72,17 @@ int* proximoValorMenosRestritivo(int** jogo){
                 valorTemp = nValoresValidos(jogo,i,j);
                 if(valorTemp < minimoValoresValidos){
                     minimoValoresValidos = valorTemp;
+                    maximoGrau = calcularGrau(jogo,i,j);
                     posicoes[0] = i;
                     posicoes[1] = j;
+                }else if(valorTemp == minimoValoresValidos){
+                    grauTemp = calcularGrau(jogo,i,j);
+                    if(maximoGrau < grauTemp){
+                        minimoValoresValidos = valorTemp;
+                        maximoGrau = grauTemp;
+                        posicoes[0] = i;
+                        posicoes[1] = j;
+                    }
                 }
             }
         }
@@ -88,6 +101,38 @@ int nValoresValidos(int** jogo,int linha,int coluna){
         }
         jogo[linha][coluna] = 0;
     }
+    return total;
+}
+
+int calcularGrau(int** jogo, int linha,int coluna){
+    int total = 0;
+    int auxLinha = linha / 3;
+    int auxColuna = coluna / 3;
+    int x;
+    int y;
+
+    for(int i = 0; i < 9; i++){
+        if(jogo[linha][i] == 0 && i != (3*auxColuna) && i != (3*auxColuna+1) && i != (3*auxColuna+2)){
+            total++;
+        }
+    }
+
+    for(int i = 0; i < 9; i++){
+        if(jogo[i][coluna] == 0 && i != (3*auxLinha) && i != (3*auxLinha+1) && i != (3*auxLinha+2)){
+            total++;
+        }
+    }
+
+    for(int i = 0 ; i < 3; i++){
+        x = 3 * auxLinha + i;
+        for(int j = 0; j < 3; j++){
+            y = 3 * auxColuna + j;
+            if(jogo[x][y] == 0){
+                total++;
+            }
+        }
+    }
+
     return total;
 }
 
@@ -126,15 +171,6 @@ bool retrocessoRecursivo(int** jogo){
     return false;
 }
 
-
-
-bool consistente(int** jogo, int linha,int coluna){
-    if(verificarLinha(jogo,linha,coluna) && verificarColuna(jogo,linha,coluna) && verificarBloco(jogo,linha,coluna)){
-        return true;
-    }
-    return false;
-}
-
 int* proximoVazio(int** jogo){
 
     int* posicoes =  new int[2];
@@ -149,6 +185,13 @@ int* proximoVazio(int** jogo){
         }
     }
     return posicoes;
+}
+
+bool consistente(int** jogo, int linha,int coluna){
+    if(verificarLinha(jogo,linha,coluna) && verificarColuna(jogo,linha,coluna) && verificarBloco(jogo,linha,coluna)){
+        return true;
+    }
+    return false;
 }
 
 bool verificarColuna(int** jogo, int linha,int coluna){
