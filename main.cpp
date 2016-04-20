@@ -6,9 +6,10 @@
 using namespace std;
 
 
-const int tamanho = 9;
+const int TAMANHO = 9;
+const int ESTRATEGIA = 1;// 0 - backtracking; 1 - MVR; 2 - VERIFICAÇÃO PRÉVIA
 
-bool retrocesso_recursivo(int** jogo);
+bool retrocessoRecursivo(int** jogo);
 int* proximoVazio(int** jogo);
 bool consistente(int** jogo, int linha,int coluna);
 bool verificarLinha(int** jogo, int linha,int coluna);
@@ -16,39 +17,39 @@ bool verificarColuna(int** jogo, int linha,int coluna);
 bool verificarBloco(int** jogo, int linha,int coluna);
 void mostrarJogo(int** jogo);
 bool atribuicaoCompleta(int** jogo);
-bool retrocesso_recursivo(int** jogo);
 
-
+int* proximoValorMenosRestritivo(int** jogo);
+int nValoresValidos(int** jogo,int linha,int coluna);
 
 int main(){
 
     int nJogos;
-    //ifstream infile("teste.txt");
+    ifstream infile("teste.txt");
 
-    cin >> nJogos;
-    //nJogos = 1;
+    //cin >> nJogos;
+    nJogos = 1;
 
-    int** jogo = new int*[tamanho];
-    //int** jogo =(int**) malloc(sizeof(int*)*tamanho);
+    int** jogo = new int*[TAMANHO];
 
-    cout << nJogos << endl;
+    //cout << nJogos << endl;
 
-    for(int i = 0; i < tamanho; i++){
-        jogo[i] = new int[tamanho];
-        //jogo[i] = (int*)malloc(sizeof(int)*tamanho);
+    for(int i = 0; i < TAMANHO; i++){
+        jogo[i] = new int[TAMANHO];
     }
 
     for(int n = 0; n < nJogos; n++){
         cout << "N: "<< n<<endl;
 
-        for(int i = 0; i < tamanho; i++){//LINHA
-            for(int j = 0; j < tamanho; j++){//COLUNA
-                cin >> jogo[i][j];
-                //infile >> jogo[i][j];
+        for(int i = 0; i < TAMANHO; i++){//LINHA
+            for(int j = 0; j < TAMANHO; j++){//COLUNA
+                //cin >> jogo[i][j];
+                infile >> jogo[i][j];
             }
         }
         mostrarJogo(jogo);
-        retrocesso_recursivo(jogo);
+
+        //cout << nValoresValidos(jogo,0,1);
+        retrocessoRecursivo(jogo);
         mostrarJogo(jogo);
     }
 
@@ -56,9 +57,41 @@ int main(){
     return 0;
 }
 
+int* proximoValorMenosRestritivo(int** jogo){
+    int minimoValoresValidos = 10;
+    int valorTemp;
+    int* posicoes =  new int[2];
 
+    for(int i = 0; i < 9; i++){
+        for(int j = 0; j < 9; j++){
+            if(jogo[i][j] == 0){
+                valorTemp = nValoresValidos(jogo,i,j);
+                if(valorTemp < minimoValoresValidos){
+                    minimoValoresValidos = valorTemp;
+                    posicoes[0] = i;
+                    posicoes[1] = j;
+                }
+            }
+        }
+    }
 
-bool retrocesso_recursivo(int** jogo){
+    return posicoes;
+}
+
+int nValoresValidos(int** jogo,int linha,int coluna){
+    int total = 0;
+    for(int i = 1; i <= 9; i++){
+        jogo[linha][coluna] = i;
+        if(consistente(jogo,linha,coluna)){
+            //cout << i << endl;
+            total++;
+        }
+        jogo[linha][coluna] = 0;
+    }
+    return total;
+}
+
+bool retrocessoRecursivo(int** jogo){
     int x;
     int y;
     int* posicao = new int[2];
@@ -69,12 +102,13 @@ bool retrocesso_recursivo(int** jogo){
         return true;
     }
 
-    //cin.ignore();
-
-    posicao = proximoVazio(jogo);
+    if(ESTRATEGIA == 0){
+        posicao = proximoVazio(jogo);
+    }else if(ESTRATEGIA == 1){
+        posicao = proximoValorMenosRestritivo(jogo);
+    }
     x = posicao[0];
     y = posicao[1];
-    //cout << "\tNão é completa: " << x << " " << y << " = " << jogo[x][y]<< endl;
 
     free(posicao);
     for(int i = 1; i <= 9; i++){
@@ -82,7 +116,7 @@ bool retrocesso_recursivo(int** jogo){
 
         if(consistente(jogo,x,y)){
             //cout << "Consistente" << endl;
-            resultado = retrocesso_recursivo(jogo);
+            resultado = retrocessoRecursivo(jogo);
             if(resultado != false){
                 return true;
             }
@@ -95,12 +129,6 @@ bool retrocesso_recursivo(int** jogo){
 
 
 bool consistente(int** jogo, int linha,int coluna){
-    //bool mLinha = verificarLinha(jogo,linha,coluna);
-    //bool mColuna = verificarColuna(jogo,linha,coluna);
-    //bool mBloco = verificarBloco(jogo,linha,coluna);
-
-    //cout << "Linha: " <<mLinha<<" Coluna:  "<<mColuna<<" Bloco: "<<mBloco<<" Valor: "<<jogo[linha][coluna]<< endl;
-
     if(verificarLinha(jogo,linha,coluna) && verificarColuna(jogo,linha,coluna) && verificarBloco(jogo,linha,coluna)){
         return true;
     }
@@ -116,13 +144,10 @@ int* proximoVazio(int** jogo){
                 if(jogo[i][j] == 0){
                     posicoes[0] = i;
                     posicoes[1] = j;
-                    //cout << "LINHA: "<< i << " COLUNA: "<< j << " VALOR: "<< jogo[i][j]<<endl;
                     return posicoes;
                 }
         }
     }
-    //posicoes[0] = 8;
-    //posicoes[1] = 8;
     return posicoes;
 }
 
@@ -163,8 +188,8 @@ bool verificarBloco(int** jogo, int linha,int coluna){
 }
 
 bool atribuicaoCompleta(int** jogo){
-    for(int i = 0; i < tamanho; i++){
-        for(int j = 0; j < tamanho; j++){
+    for(int i = 0; i < TAMANHO; i++){
+        for(int j = 0; j < TAMANHO; j++){
             if(jogo[i][j] == 0){
                 return false;
             }
@@ -176,8 +201,8 @@ bool atribuicaoCompleta(int** jogo){
 void mostrarJogo(int** jogo){
     cout << "\tJOGO\n";
 
-    for(int i = 0; i < tamanho; i++){//LINHA
-        for(int j = 0; j < tamanho; j++){//COLUNA
+    for(int i = 0; i < TAMANHO; i++){//LINHA
+        for(int j = 0; j < TAMANHO; j++){//COLUNA
 
             cout << " " << jogo[i][j];
             if((j+1) % 3 == 0){
