@@ -3,6 +3,9 @@
 #include <fstream>//LER ARQUIVO
 #include <stdlib.h>
 
+#include<map>
+#include<queue>
+
 using namespace std;
 
 
@@ -23,20 +26,81 @@ int nValoresValidos(int** jogo,int linha,int coluna);
 int calcularGrau(int** jogo, int linha,int coluna);
 
 
+int** verificacoes = new int*[81];//Valor 0: não tem restrição; Valor 1:tem restrição
+
+int** atualizarVerificacoes(int linha, int coluna,int valor){
+    int posicao = linha * 9;
+    int bLinha = linha/3;
+    int bColuna = coluna/3;
+    int cont = 0;
+
+    int** atualizados = new int*[21];
+    for(int i = 0; i < 21; i++){
+        atualizados[i] = new int[2];
+    }
+
+    valor = valor - 1;
+
+    for(int i = posicao; i < posicao+9; i++){
+        if(verificacoes[i][valor] == 0){
+            verificacoes[i][valor] = 1;
+            atualizados[cont][0] = i/9;
+            atualizados[cont][1] = i%9;
+            cont++;
+        }
+    }
+
+    for(int i = coluna; i < 81; i+=9){
+        if(verificacoes[i][valor] == 0){
+            verificacoes[i][valor] = 1;
+            atualizados[cont][0] = i/9;
+            atualizados[cont][1] = i%9;
+            cont++;
+        }
+    }
+
+    posicao = (bLinha *27) + (bColuna * 3);
+
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(verificacoes[posicao+(9*i)+j][valor] == 0){
+                verificacoes[posicao+(9*i)+j][valor] = 1;
+                atualizados[cont][0] = i/9;
+                atualizados[cont][1] = i%9;
+                cont++;
+            }
+        }
+    }
+
+    for(int i = 0;i < 81; i++){
+        cout << i << " ) ";
+        for(int j = 0; j < 9; j++){
+            cout << verificacoes[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+
+    return atualizados;
+}
+
 int main(){
 
     int nJogos;
+    int totalMatrizVerificacaoPrevia = TAMANHO*TAMANHO;
     ifstream infile("teste.txt");
 
     //cin >> nJogos;
-    nJogos = 1;
+    infile >> nJogos;
 
     int** jogo = new int*[TAMANHO];
 
-    //cout << nJogos << endl;
-
     for(int i = 0; i < TAMANHO; i++){
         jogo[i] = new int[TAMANHO];
+    }
+
+    for(int i = 0; i < 81; i++){
+        verificacoes[i] = new int[TAMANHO]{0,0,0,0,0,0,0,0,0};
     }
 
     for(int n = 0; n < nJogos; n++){
@@ -55,9 +119,10 @@ int main(){
         mostrarJogo(jogo);
     }
 
-
     return 0;
 }
+
+
 
 int* proximoValorMenosRestritivo(int** jogo){
     int minimoValoresValidos = 10;
