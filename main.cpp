@@ -11,6 +11,7 @@ using namespace std;
 
 const int TAMANHO = 9;
 const int ESTRATEGIA = 1;// 0 - backtracking; 1 - MVR; 2 - VERIFICAÇÃO PRÉVIA
+const int VERIFICACAO_ADIANTE = 1;
 
 bool retrocessoRecursivo(int** jogo);
 int* proximoVazio(int** jogo);
@@ -28,15 +29,27 @@ int calcularGrau(int** jogo, int linha,int coluna);
 
 int** verificacoes = new int*[81];//Valor 0: não tem restrição; Valor 1:tem restrição
 
-int** atualizarVerificacoes(int linha, int coluna,int valor){
+void desfazerAtualizacoes(int* atualizacoes,int valor){
+    valor = valor - 1;
+    for(int i = 0; i < 21; i++){
+        if( atualizacoes[i] != -1){
+            verificacoes[atualizacoes[i]][valor] = 0;
+        }
+    }
+    delete(atualizacoes);
+}
+
+int* atualizarVerificacoes(int linha, int coluna,int valor){
+
     int posicao = linha * 9;
     int bLinha = linha/3;
     int bColuna = coluna/3;
     int cont = 0;
 
-    int** atualizados = new int*[21];
+    int* atualizados = new int[21];
+
     for(int i = 0; i < 21; i++){
-        atualizados[i] = new int[2];
+        atualizados[i] = -1;
     }
 
     valor = valor - 1;
@@ -44,8 +57,7 @@ int** atualizarVerificacoes(int linha, int coluna,int valor){
     for(int i = posicao; i < posicao+9; i++){
         if(verificacoes[i][valor] == 0){
             verificacoes[i][valor] = 1;
-            atualizados[cont][0] = i/9;
-            atualizados[cont][1] = i%9;
+            atualizados[cont] = i;
             cont++;
         }
     }
@@ -53,8 +65,7 @@ int** atualizarVerificacoes(int linha, int coluna,int valor){
     for(int i = coluna; i < 81; i+=9){
         if(verificacoes[i][valor] == 0){
             verificacoes[i][valor] = 1;
-            atualizados[cont][0] = i/9;
-            atualizados[cont][1] = i%9;
+            atualizados[cont] = i;
             cont++;
         }
     }
@@ -65,30 +76,35 @@ int** atualizarVerificacoes(int linha, int coluna,int valor){
         for(int j = 0; j < 3; j++){
             if(verificacoes[posicao+(9*i)+j][valor] == 0){
                 verificacoes[posicao+(9*i)+j][valor] = 1;
-                atualizados[cont][0] = i/9;
-                atualizados[cont][1] = i%9;
+                atualizados[cont] = posicao+(9*i)+j;
                 cont++;
             }
         }
     }
 
     for(int i = 0;i < 81; i++){
+        for(int j = 0; j < 9; j++){
+            if(verificacoes[i][j] == 0){
+                return atualizados;
+            }
+        }
+    }
+    /*for(int i = 0;i < 81; i++){
         cout << i << " ) ";
         for(int j = 0; j < 9; j++){
             cout << verificacoes[i][j] << " ";
         }
         cout << endl;
-    }
+    }*/
 
-
-    return atualizados;
+    return false;
 }
 
 int main(){
 
     int nJogos;
     int totalMatrizVerificacaoPrevia = TAMANHO*TAMANHO;
-    ifstream infile("teste.txt");
+    ifstream infile("teste2.txt");
 
     //cin >> nJogos;
     infile >> nJogos;
@@ -99,9 +115,11 @@ int main(){
         jogo[i] = new int[TAMANHO];
     }
 
-    for(int i = 0; i < 81; i++){
-        verificacoes[i] = new int[TAMANHO]{0,0,0,0,0,0,0,0,0};
-    }
+
+
+    //atualizarVerificacoes(3,3,9);
+
+    //return 0;
 
     for(int n = 0; n < nJogos; n++){
         cout << "N: "<< n<<endl;
@@ -109,6 +127,11 @@ int main(){
         for(int i = 0; i < TAMANHO; i++){//LINHA
             for(int j = 0; j < TAMANHO; j++){//COLUNA
                 //cin >> jogo[i][j];
+                if(VERIFICACAO_ADIANTE == 1){
+                    for(int ii = 0; ii < 81; ii++){
+                        verificacoes[ii] = new int[TAMANHO]{0,0,0,0,0,0,0,0,0};
+                    }
+                }
                 infile >> jogo[i][j];
             }
         }
@@ -206,6 +229,8 @@ bool retrocessoRecursivo(int** jogo){
     int y;
     int* posicao = new int[2];
     bool resultado = true;
+    bool verificado = true;
+    int* atualizacoes;
 
     if(atribuicaoCompleta(jogo)){
         cout << "Completa" << endl;
@@ -224,12 +249,26 @@ bool retrocessoRecursivo(int** jogo){
     for(int i = 1; i <= 9; i++){
         jogo[x][y] = i;
 
-        if(consistente(jogo,x,y)){
+        if(VERIFICACAO_ADIANTE == 1){
+            atualizacoes = atualizarVerificacoes(x,y,i);
+            if(atualizacoes != 0){
+                verificado = true;
+            }else{
+                verificado = false;
+            }
+        }else{
+            verificado = true;
+        }
+
+        if(consistente(jogo,x,y) && verificado){
             //cout << "Consistente" << endl;
             resultado = retrocessoRecursivo(jogo);
             if(resultado != false){
                 return true;
             }
+        }
+        if(VERIFICACAO_ADIANTE == 1){
+            desfazerAtualizacoes(atualizacoes,i);
         }
     }
     jogo[x][y] = 0;
