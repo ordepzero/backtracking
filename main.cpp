@@ -2,15 +2,14 @@
 #include <cstdio>
 #include <fstream>//LER ARQUIVO
 #include <stdlib.h>
-
-#include<map>
-#include<queue>
+#include <math.h>
+#include <ctime>
 
 using namespace std;
 
 
 const int TAMANHO = 9;
-const int ESTRATEGIA = 1;// 0 - backtracking; 1 - MVR; 2 - VERIFICAÇÃO PRÉVIA
+const int MVR = 1;// 0 - backtracking; 1 - MVR;
 const int VERIFICACAO_ADIANTE = 1;
 
 bool retrocessoRecursivo(int** jogo);
@@ -25,83 +24,13 @@ bool atribuicaoCompleta(int** jogo);
 int* proximoValorMenosRestritivo(int** jogo);
 int nValoresValidos(int** jogo,int linha,int coluna);
 int calcularGrau(int** jogo, int linha,int coluna);
+bool atualizarVerificacoes(int** jogo,int linha, int coluna);
 
-
-int** verificacoes = new int*[81];//Valor 0: não tem restrição; Valor 1:tem restrição
-
-void desfazerAtualizacoes(int* atualizacoes,int valor){
-    valor = valor - 1;
-    for(int i = 0; i < 21; i++){
-        if( atualizacoes[i] != -1){
-            verificacoes[atualizacoes[i]][valor] = 0;
-        }
-    }
-    delete(atualizacoes);
-}
-
-int* atualizarVerificacoes(int linha, int coluna,int valor){
-
-    int posicao = linha * 9;
-    int bLinha = linha/3;
-    int bColuna = coluna/3;
-    int cont = 0;
-
-    int* atualizados = new int[21];
-
-    for(int i = 0; i < 21; i++){
-        atualizados[i] = -1;
-    }
-
-    valor = valor - 1;
-
-    for(int i = posicao; i < posicao+9; i++){
-        if(verificacoes[i][valor] == 0){
-            verificacoes[i][valor] = 1;
-            atualizados[cont] = i;
-            cont++;
-        }
-    }
-
-    for(int i = coluna; i < 81; i+=9){
-        if(verificacoes[i][valor] == 0){
-            verificacoes[i][valor] = 1;
-            atualizados[cont] = i;
-            cont++;
-        }
-    }
-
-    posicao = (bLinha *27) + (bColuna * 3);
-
-    for(int i = 0; i < 3; i++){
-        for(int j = 0; j < 3; j++){
-            if(verificacoes[posicao+(9*i)+j][valor] == 0){
-                verificacoes[posicao+(9*i)+j][valor] = 1;
-                atualizados[cont] = posicao+(9*i)+j;
-                cont++;
-            }
-        }
-    }
-
-    for(int i = 0;i < 81; i++){
-        for(int j = 0; j < 9; j++){
-            if(verificacoes[i][j] == 0){
-                return atualizados;
-            }
-        }
-    }
-    /*for(int i = 0;i < 81; i++){
-        cout << i << " ) ";
-        for(int j = 0; j < 9; j++){
-            cout << verificacoes[i][j] << " ";
-        }
-        cout << endl;
-    }*/
-
-    return false;
-}
+int numeroAtibuicoes;
 
 int main(){
-
+    int tempoInicio;
+    int tempoTermino;
     int nJogos;
     int totalMatrizVerificacaoPrevia = TAMANHO*TAMANHO;
     ifstream infile("teste2.txt");
@@ -115,31 +44,29 @@ int main(){
         jogo[i] = new int[TAMANHO];
     }
 
-
-
-    //atualizarVerificacoes(3,3,9);
-
-    //return 0;
-
     for(int n = 0; n < nJogos; n++){
-        cout << "N: "<< n<<endl;
-
+        //cout << "N: "<< n<<endl;
         for(int i = 0; i < TAMANHO; i++){//LINHA
             for(int j = 0; j < TAMANHO; j++){//COLUNA
                 //cin >> jogo[i][j];
-                if(VERIFICACAO_ADIANTE == 1){
-                    for(int ii = 0; ii < 81; ii++){
-                        verificacoes[ii] = new int[TAMANHO]{0,0,0,0,0,0,0,0,0};
-                    }
-                }
+
                 infile >> jogo[i][j];
             }
         }
-        mostrarJogo(jogo);
+        //mostrarJogo(jogo);
 
         //cout << nValoresValidos(jogo,0,1);
+        numeroAtibuicoes = 0;
+        tempoInicio = clock();
         retrocessoRecursivo(jogo);
-        mostrarJogo(jogo);
+        tempoTermino = clock();
+        //cout <<n << "  time:\t\t" << (tempoTermino-tempoInicio)/double(CLOCKS_PER_SEC) << "\t\t"<< numeroAtibuicoes << endl;
+        //cout  << numeroAtibuicoes << endl;
+        if(numeroAtibuicoes > pow(10,6)){
+            cout << "Numero de atribuicoes excede limite maximo.\n";
+        }else{
+            mostrarJogo(jogo);
+        }
     }
 
     return 0;
@@ -224,56 +151,6 @@ int calcularGrau(int** jogo, int linha,int coluna){
     return total;
 }
 
-bool retrocessoRecursivo(int** jogo){
-    int x;
-    int y;
-    int* posicao = new int[2];
-    bool resultado = true;
-    bool verificado = true;
-    int* atualizacoes;
-
-    if(atribuicaoCompleta(jogo)){
-        cout << "Completa" << endl;
-        return true;
-    }
-
-    if(ESTRATEGIA == 0){
-        posicao = proximoVazio(jogo);
-    }else if(ESTRATEGIA == 1){
-        posicao = proximoValorMenosRestritivo(jogo);
-    }
-    x = posicao[0];
-    y = posicao[1];
-
-    free(posicao);
-    for(int i = 1; i <= 9; i++){
-        jogo[x][y] = i;
-
-        if(VERIFICACAO_ADIANTE == 1){
-            atualizacoes = atualizarVerificacoes(x,y,i);
-            if(atualizacoes != 0){
-                verificado = true;
-            }else{
-                verificado = false;
-            }
-        }else{
-            verificado = true;
-        }
-
-        if(consistente(jogo,x,y) && verificado){
-            //cout << "Consistente" << endl;
-            resultado = retrocessoRecursivo(jogo);
-            if(resultado != false){
-                return true;
-            }
-        }
-        if(VERIFICACAO_ADIANTE == 1){
-            desfazerAtualizacoes(atualizacoes,i);
-        }
-    }
-    jogo[x][y] = 0;
-    return false;
-}
 
 int* proximoVazio(int** jogo){
 
@@ -346,6 +223,17 @@ bool atribuicaoCompleta(int** jogo){
 }
 
 void mostrarJogo(int** jogo){
+    for(int i = 0; i < TAMANHO; i++){//LINHA
+        for(int j = 0; j < TAMANHO; j++){//COLUNA
+
+            cout  << jogo[i][j] << " ";
+        }
+        cout << "\n";
+    }
+    cout << "\n";
+}
+
+void mostrarJogoComDivisores(int** jogo){
     cout << "\tJOGO\n";
 
     for(int i = 0; i < TAMANHO; i++){//LINHA
@@ -366,4 +254,102 @@ void mostrarJogo(int** jogo){
         }
     }
 
+}
+
+bool atualizarVerificacoes(int** jogo,int linha, int coluna){
+    int cont;
+    int bLinha,bColuna;
+
+    /*for(int i = 0; i < 9; i++){
+        for(int j = 0; j < 9; j++){
+            if(jogo[i][j] == 0){
+                cont = nValoresValidos(jogo,i,j);
+                if(cont == 0){
+                    return false;
+                }
+            }
+        }
+    }*/
+
+    bLinha = linha / 3;
+    bColuna = coluna / 3;
+
+    bLinha = bLinha * 3;
+    bColuna = bColuna * 3;
+
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j < 3; j++){
+            if(jogo[bLinha+i][bColuna+j] == 0){
+                cont = nValoresValidos(jogo,bLinha+i,bColuna+j);
+                if(cont == 0){
+                    return false;
+                }
+            }
+        }
+    }
+
+    for(int i = 0; i < 9;i++){
+        if(jogo[i][coluna] == 0){
+            cont = nValoresValidos(jogo,i,coluna);
+            if(cont == 0){
+                return false;
+            }
+        }
+    }
+
+    for(int i = 0; i < 9;i++){
+        if(jogo[linha][i] == 0){
+            cont = nValoresValidos(jogo,linha,i);
+            if(cont == 0){
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool retrocessoRecursivo(int** jogo){
+    int x;
+    int y;
+    int* posicao = new int[2];
+    bool resultado = true;
+    bool verificado = true;
+
+    if(atribuicaoCompleta(jogo)){
+        //cout << "Completa" << endl;
+        return true;
+    }
+
+    if(MVR == 0){
+        posicao = proximoVazio(jogo);
+    }else if(MVR == 1){
+        posicao = proximoValorMenosRestritivo(jogo);
+    }
+    x = posicao[0];
+    y = posicao[1];
+
+    delete(posicao);
+    for(int i = 1; i <= 9; i++){
+        jogo[x][y] = i;
+        numeroAtibuicoes++;
+        if(numeroAtibuicoes > pow(10,6)){
+            return false;
+        }
+        if(VERIFICACAO_ADIANTE == 1){
+            verificado = atualizarVerificacoes(jogo,x,y);
+        }else{
+            verificado = true;
+        }
+
+        if(consistente(jogo,x,y) && verificado){
+            //cout << "Consistente" << endl;
+            resultado = retrocessoRecursivo(jogo);
+            if(resultado != false){
+                return true;
+            }
+        }
+    }
+    jogo[x][y] = 0;
+    return false;
 }

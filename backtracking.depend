@@ -1,9 +1,9 @@
 # depslib dependency file v1.0
-1461386257 source:c:\users\pedenrique\copy\usp\disciplinas\projetodealgoritmo\programas\backtracking\main.cpp
+1461555973 source:c:\users\pedenrique\copy\usp\disciplinas\projetodealgoritmo\programas\backtracking\main.cpp
 	<iostream>
 	<cstdio>
 	<fstream>
 	<stdlib.h>
-	<map>
-	<queue>
+	<math.h>
+	<ctime>
 
